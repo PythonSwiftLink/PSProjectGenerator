@@ -63,8 +63,8 @@ formula_lastest = template0.format(version=version, version_name="", sha=sha)
 
 formula_version = template0.format(version=version, version_name=f'AT{version.replace(".","")}', sha=sha)
 
-with open("homebrew_formula/PSProject.rb", "w") as f:
+with open("homebrew_formula/psproject.rb", "w") as f:
     f.write(formula_lastest)
 
-with open(f"homebrew_formula/PSProject@{version}.rb", "w") as f:
+with open(f"homebrew_formula/psproject@{version}.rb", "w") as f:
     f.write(formula_version)
