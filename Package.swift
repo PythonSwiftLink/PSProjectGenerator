@@ -8,7 +8,7 @@ let package = Package(
 	platforms: [.macOS(.v13)],
 	products: [
 		.executable(name: "PSProjectCLI", targets: ["PythonSwiftProjectCLI"]),
-		.library(name: "PSProjectGen", targets: ["PSProjectGen"])
+		.library(name: "PSProjectGen", targets: ["PSProjectGen"]),
 	],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),

@@ -39,3 +39,20 @@ func gitClone(_ repo: String) -> String {
 	print(output)
 	return output
 }
+
+@discardableResult
+func pipInstall(_ requirements: Path, site_path: Path) -> String {
+	let task = Process()
+	let pipe = Pipe()
+	task.standardOutput = pipe
+	task.standardError = pipe
+	task.arguments = ["install","-r", requirements.string, "-t", site_path.string]
+	task.executableURL = .init(filePath: "/usr/local/bin/pip3.10")
+	task.standardInput = nil
+	task.launch()
+	
+	let data = pipe.fileHandleForReading.readDataToEndOfFile()
+	let output = String(data: data, encoding: .utf8)!
+	print(output)
+	return output
+}
