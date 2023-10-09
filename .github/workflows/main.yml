@@ -31,11 +31,10 @@ jobs:
           xcode-version: '15.0'
       - name: Build Release    
         run: | 
-              swift build -c release --disable-sandbox --arch arm64 --arch x86_64
+              swift build -c release --disable-sandbox --arch arm64 --arch x86_64 --product PSProjectCLI
               mkdir release
               cp -rf .build/apple/Products/Release/PSProjectCLI release/PSProject
-              #cp -rf python_stdlib release/python_stdlib
-              #cp -rf python-extra release/python-extra
+  
               tar -C ./release/ -czvf ./PSProject.tar.gz ./    
       
       - name: Set SHA256
