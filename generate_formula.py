@@ -1,4 +1,4 @@
-from cookiecutter.main import cookiecutter
+#from cookiecutter.main import cookiecutter
 from os.path import join, abspath
 from os import pardir, getcwd
 import sys
