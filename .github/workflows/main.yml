@@ -76,15 +76,17 @@ jobs:
       - name: install python packages
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install cookiecutter
+          #pip3 install cookiecutter
         
-      - name: generate cookie
-        run: python3.10 generate_formula.py ${{ needs.mainjob1.outputs.version }} ${{ needs.mainjob1.outputs.sha }}
+      - name: generate formula
+        run: |
+          mkdir homebrew_formula
+          python3.10 generate_formula.py ${{ needs.mainjob1.outputs.version }} ${{ needs.mainjob1.outputs.sha }}
 
       - name: clone tools and update
         run: |
             git clone https://github.com/pythonswiftlink/homebrew-tools
-            cp -f homebrew_formula/* homebrew-tools/Formula/s/
+            cp -f homebrew_formula/* homebrew-tools/Formula/p/
 
       - name: Pushes to another repository
         uses: cpina/github-action-push-to-another-repository@main
