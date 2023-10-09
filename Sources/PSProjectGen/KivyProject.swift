@@ -364,7 +364,8 @@ public class KivyProject: PSProjectProtocol {
 		if local_py_src {
 			try? (current + "py_src").mkdir()
 		} else {
-			try Path(py_src).link((current + "py_src"))
+			//try Path(py_src).symlink((current + "py_src"))
+			try (current + "py_src").symlink(.init(py_src))
 		}
 		// clean up
 		
