@@ -238,18 +238,22 @@ public class KivyProject: PSProjectProtocol {
 	
 	public var py_src: String
 	
-	var _targets: [PSProjTargetProtocol]
+	var _targets: [PSProjTargetProtocol] = []
 	
 	var requirements: String?
 	
-	public init(name: String, py_src: String, requirements: String?) async throws {
+	var local_py_src: Bool
+	
+	public init(name: String, py_src: String?, requirements: String?) async throws {
 		self.name = name
-		self.py_src = py_src
+		self.local_py_src = py_src == nil
+		self.py_src = py_src ?? "py_src"
+		self.requirements = requirements
 		
 		_targets = [
 			try await KivyProjectTarget(
 				name: name,
-				py_src: py_src,
+				py_src: self.py_src,
 				dist_lib: (try await Path.distLib()).string
 			)
 		]
@@ -333,7 +337,16 @@ public class KivyProject: PSProjectProtocol {
 		// pip installs
 		if let requirements = requirements {
 			let site_path: Path = move_lib + "python3.10/site-packages"
-			pipInstall(.init(requirements), site_path: site_path)
+			let reqPath: Path
+			if requirements.hasPrefix("/") || requirements.hasPrefix("./") {
+				reqPath = .init(requirements)
+			} else {
+				reqPath = .current + requirements
+			}
+				
+			print("pip installing: \(reqPath)")
+			
+			pipInstall(reqPath, site_path: site_path)
 		}
 		
 		try patchPythonLib(dist: try await Path.distLib())
@@ -348,7 +361,11 @@ public class KivyProject: PSProjectProtocol {
 		}
 		try (kivyAppFiles + "Sources").move(sourcesPath)
 		
-		
+		if local_py_src {
+			try? (current + "py_src").mkdir()
+		} else {
+			try Path(py_src).link((current + "py_src"))
+		}
 		// clean up
 		
 		if kivyAppFiles.exists {
