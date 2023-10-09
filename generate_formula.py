@@ -12,7 +12,7 @@ sha = sys.argv[2]
 
 
 template0 = """
-class PSProject < Formula
+class Psproject < Formula
   desc ""
   homepage ""
 
@@ -32,7 +32,7 @@ end
 """
 
 template0 = """
-class PSProject{version_name} < Formula
+class Psproject{version_name} < Formula
   desc ""
   homepage ""
 
