@@ -33,15 +33,15 @@ jobs:
         run: | 
               swift build -c release --disable-sandbox --arch arm64 --arch x86_64
               mkdir release
-              cp -rf .build/apple/Products/Release/SwiftonizeExecutable release/Swiftonize
-              cp -rf python_stdlib release/python_stdlib
-              cp -rf python-extra release/python-extra
-              tar -C ./release/ -czvf ./swiftonize.tar.gz ./    
+              #cp -rf .build/apple/Products/Release/PSProjectCLI release/PSProject
+              #cp -rf python_stdlib release/python_stdlib
+              #cp -rf python-extra release/python-extra
+              tar -C ./release/ -czvf ./PSProject.tar.gz ./    
       
       - name: Set SHA256
         id: shasum
         run: |
-          echo "var=$(shasum -a 256 ./swiftonize.tar.gz | awk '{printf $1}')" >> $GITHUB_OUTPUT
+          echo "var=$(shasum -a 256 ./PSProject.tar.gz | awk '{printf $1}')" >> $GITHUB_OUTPUT
 
       - name: Set Version
         id: version
@@ -50,7 +50,7 @@ jobs:
       
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "swiftonize.tar.gz"
+          artifacts: "PSProject.tar.gz"
           token: ${{ secrets.Homebrew }}
           allowUpdates: true
         
