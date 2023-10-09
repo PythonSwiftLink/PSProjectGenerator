@@ -18,7 +18,7 @@ extension PythonSwiftProjectCLI.Kivy {
 	struct Create: AsyncParsableCommand {
 		@Argument var name: String
 		
-		@Argument var python_src: String
+		@Option(name: .short) var python_src: String?
 		
 		@Option(name: .short) var requirements: String?
 		
