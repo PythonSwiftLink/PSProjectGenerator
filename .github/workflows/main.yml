@@ -1,0 +1,98 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Homebrew Builder
+
+# Controls when the workflow will run
+on:
+  push:
+   tags: '*'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  mainjob1:
+    runs-on: macos-13
+    strategy:
+      matrix:
+        swift: ["5.9"]
+    outputs:
+      sha: ${{ steps.shasum.outputs.var }}
+      version: ${{ steps.version.outputs.var }}
+
+    permissions:
+      contents: write
+      
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.0'
+      - name: Build Release    
+        run: | 
+              swift build -c release --disable-sandbox --arch arm64 --arch x86_64
+              mkdir release
+              cp -rf .build/apple/Products/Release/SwiftonizeExecutable release/Swiftonize
+              cp -rf python_stdlib release/python_stdlib
+              cp -rf python-extra release/python-extra
+              tar -C ./release/ -czvf ./swiftonize.tar.gz ./    
+      
+      - name: Set SHA256
+        id: shasum
+        run: |
+          echo "var=$(shasum -a 256 ./swiftonize.tar.gz | awk '{printf $1}')" >> $GITHUB_OUTPUT
+
+      - name: Set Version
+        id: version
+        run: |
+            echo "var=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+      
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "swiftonize.tar.gz"
+          token: ${{ secrets.Homebrew }}
+          allowUpdates: true
+        
+  mainjob2:
+    needs: mainjob1
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: retrieve output
+        run: |
+          echo "${{ needs.mainjob1.outputs.version }}"
+          echo "${{ needs.mainjob1.outputs.sha }}"
+
+      
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # install the python version needed
+
+      - name: install python packages
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install cookiecutter
+        
+      - name: generate cookie
+        run: python3.10 generate_formula.py ${{ needs.mainjob1.outputs.version }} ${{ needs.mainjob1.outputs.sha }}
+
+      - name: clone tools and update
+        run: |
+            git clone https://github.com/pythonswiftlink/homebrew-tools
+            cp -f homebrew_formula/* homebrew-tools/Formula/s/
+
+      - name: Pushes to another repository
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.Homebrew }}
+        with:
+          source-directory: 'homebrew-tools'
+          destination-github-username: 'pythonswiftlink'
+          destination-repository-name: 'homebrew-tools'
+          user-email: pythonswiftlink@gmail.com
+          target-branch: master
