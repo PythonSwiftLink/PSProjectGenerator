@@ -13,6 +13,7 @@ sha = sys.argv[2]
 
 template0 = """
 class Psproject < Formula
+  depends_on "xcodegen"
   desc ""
   homepage ""
 
@@ -33,6 +34,7 @@ end
 
 template0 = """
 class Psproject{version_name} < Formula
+  depends_on "xcodegen"
   desc ""
   homepage ""
 
