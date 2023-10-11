@@ -6,10 +6,11 @@
 //
 
 import Foundation
-
+import AppKit
 import PathKit
 import XcodeGenKit
 import ProjectSpec
+import Yams
 
 enum KivyCreateError: Error, CustomStringConvertible {
 	case missingProjectSpec(Path)
@@ -50,29 +51,30 @@ enum KivyCreateError: Error, CustomStringConvertible {
 
 extension PathKit.Path {
 	
-	static func pythonLib() async throws -> Path {
-		let folder: Path = .current + "python_lib"
+	@discardableResult
+	static func pythonLib(workingDir: Path) async throws -> Path {
+		let folder: Path = workingDir + "python_lib"
 		if folder.exists { return folder }
 		try await downloadZipUnPacked(
 			url: "https://github.com/PythonSwiftLink/KivyCore/releases/download/0.0.0/python_lib.zip",
-			dst: current + "python_lib.zip"
+			dst: workingDir + "python_lib.zip"
 		)
-		return .current + "python_lib"
+		return workingDir + "python_lib"
 	}
 	
-	static func distLib() async throws -> Path {
-		let folder: Path = .current + "dist_lib"
+	static func distLib(workingDir: Path) async throws -> Path {
+		let folder: Path = workingDir + "dist_lib"
 		if folder.exists { return folder }
 		return try await downloadZipUnPacked(
 			url: "https://github.com/PythonSwiftLink/KivyCore/releases/download/0.0.0/dist_lib.zip",
-			dst: current + "dist_lib.zip"
+			dst: workingDir + "dist_lib.zip"
 		)
 	}
 	
 }
 
-func patchPythonLib(dist: Path) throws {
-	let lib = Path.current + "lib"
+func patchPythonLib(pythonLib: Path, dist: Path) throws {
+	let lib = pythonLib //workingDir + "lib"
 	let libs = lib.iterateChildren().filter( {$0.extension == "libs"} )
 	try libs.forEach { file in
 		var content = try String(contentsOf: file.url)
@@ -80,9 +82,17 @@ func patchPythonLib(dist: Path) throws {
 			of: "/Users/runner/work/KivyCoreBuilder/KivyCoreBuilder/kivy_build/dist/lib",
 			with: "\(dist.string)"
 		)
+		content = content.replacingOccurrences(
+			of: "Xcode_15.0.app",
+			with: "Xcode.app"
+		)
 		try file.write(content, encoding: .utf8)
 	}
 }
+
+
+
+
 
 public class KivyProjectTarget: PSProjTargetProtocol {
 	
@@ -91,27 +101,43 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 	
 	var dist_lib: String
 	
-	public init(name: String, py_src: String, dist_lib: String) async throws {
+	public var projectSpec: Path?
+//	var projectSpec: SpecData?
+	
+	let workingDir: Path
+	let resourcesPath: Path
+	let pythonLibPath: Path
+	
+	public init(name: String, py_src: String, dist_lib: String, projectSpec: Path?, workingDir: Path) async throws {
 		self.name = name
+		self.workingDir = workingDir
+		let resources = workingDir + "Resources"
+		self.resourcesPath = resources
+		self.pythonLibPath = resources + "lib"
 		self.pythonProject = py_src
 		self.dist_lib = dist_lib
+		self.projectSpec = projectSpec
 	}
 	public func build() async throws {
 	
 	}
 	
 	public func projSettings() async throws -> ProjectSpec.Settings {
-		
-		var configSettings: Settings {
-			[
-				"LIBRARY_SEARCH_PATHS": [
-					"\"$(inherited)\"",
-					dist_lib
-				],
-				"SWIFT_VERSION": "5.0",
-				"OTHER_LDFLAGS": "-all_load"
-			]
+		var configDict: [String: Any] = [
+			"LIBRARY_SEARCH_PATHS": [
+				"\"$(inherited)\"",
+				dist_lib
+			],
+			"SWIFT_VERSION": "5.0",
+			"OTHER_LDFLAGS": "-all_load"
+		]
+		if let projectSpec = projectSpec {
+			try loadBuildConfigKeys(from: projectSpec, keys: &configDict)
 		}
+		var configSettings: Settings {
+			.init(dictionary: configDict)
+		}
+		
 		return .init(configSettings: [
 			"debug": configSettings,
 			"release": configSettings
@@ -123,57 +149,66 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 	}
 	
 	public func sources() async throws -> [ProjectSpec.TargetSource] {
-		let current = PathKit.Path.current
+		let current = workingDir
 		
-		var testPath: Path {
+		var sourcesPath: Path {
 			
 			return (current + "Sources")
 		}
-		
-		let python_lib = (Path.current + "lib" ) //try await Path.pythonLib()
-		
-		
-		//let site_packs = python_lib + "python3.10/site-packages"
-		
-		
-		return [
-			//.init(path: current.string),
-			TargetSource(path: (testPath).string, type: .group),
-			//.init(path: "Resources", type: .group),
-			.init(path: "YourApp", group: "Resources", type: .file, buildPhase: .resources, createIntermediateGroups: true),
-			.init(path: python_lib.string, group: "Resources", type: .file, buildPhase: .resources, createIntermediateGroups: true),
+
+		var pips: [ProjectSpec.TargetSource] = [
+			TargetSource(path: (sourcesPath).string, type: .group),
+			.init(path: "Resources/YourApp", group: "Resources", type: .file, buildPhase: .resources, createIntermediateGroups: true),
+			.init(path: pythonLibPath.string, group: "Resources", type: .file, buildPhase: .resources, createIntermediateGroups: true),
 		]
+		
+		if let projectSpec = projectSpec {
+			try loadExtraPipFolders(from: projectSpec, pips: &pips)
+		}
+		
+		return pips
 	}
 	
 	public func dependencies() async throws -> [ProjectSpec.Dependency] {
-		[
+		var output: [ProjectSpec.Dependency] = [
 			.init(type: .package(product: "PySwiftObject"), reference: "KivySwiftLink"),
 			.init(type: .package(product: "PythonSwiftCore"), reference: "KivySwiftLink"),
 			.init(type: .package(product: "KivyLauncher"), reference: "KivySwiftLink"),
 		]
+		if let packageSpec = projectSpec {
+			try loadPackageDependencies(from: packageSpec, output: &output)
+		}
+	
+		return output
 	}
 	
 	public func info() async throws -> ProjectSpec.Plist {
-		.init(path: "Info.plist" )
+		if let packageSpec = projectSpec {
+			var extraKeys = [String:Any]()
+			try loadInfoPlistInfo(from: packageSpec, plist: &extraKeys)
+			return .init(path: "Info.plist", attributes: extraKeys)
+		}
+		
+		return .init(path: "Info.plist" )
 	}
 	
 	public func preBuildScripts() async throws -> [ProjectSpec.BuildScript] {
 		[
 			.init(
 				script: .script("""
-				rsync -av --delete "\(pythonProject)"/ "$PROJECT_DIR"/YourApp
+				rsync -av --delete "\(pythonProject)"/ "$PROJECT_DIR"/Resources/YourApp
 				"""),
 				name: "Sync Project"
 			),
 			.init(
 				script: .script("""
-				python3.10 -m compileall -f -b "$PROJECT_DIR"/YourApp
+				python3.10 -m compileall -f -b "$PROJECT_DIR"/Resources/YourApp
 				"""),
 				name: "Compile Python Files"
 			),
 			.init(
 				script: .script("""
-				find "$PROJECT_DIR"/YourApp/ -regex '.*\\.py' -delete
+				find "$PROJECT_DIR"/Resources/YourApp/ -regex '.*\\.py' -delete
 				"""),
 				name: "Delete .py leftovers"
 			)
@@ -201,7 +236,7 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 			name: name,
 			type: .application,
 			platform: .iOS,
-			productName: nil,
+			productName: name,
 			deploymentTarget: .init("13.0"),
 			settings: try await projSettings(),
 			configFiles: try await configFiles(),
@@ -231,7 +266,7 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 	
 	
 }
-
+public typealias ProjectSpecDictionary = [String:Any] //[ String: [[String: Any]] ]
 
 public class KivyProject: PSProjectProtocol {
 	public var name: String
@@ -244,17 +279,32 @@ public class KivyProject: PSProjectProtocol {
 	
 	var local_py_src: Bool
 	
-	public init(name: String, py_src: String?, requirements: String?) async throws {
+	public var projectSpec: Path?
+	
+	let workingDir: Path
+	let resourcesPath: Path
+	let pythonLibPath: Path
+	var projectSpecData: SpecData?
+	
+	public init(name: String, py_src: String?, requirements: String?, projectSpec: Path?, workingDir: Path) async throws {
 		self.name = name
+		self.workingDir = workingDir
+		let resources = workingDir + "Resources"
+		self.resourcesPath = resources
+		self.pythonLibPath = resources + "lib"
 		self.local_py_src = py_src == nil
 		self.py_src = py_src ?? "py_src"
 		self.requirements = requirements
+		self.projectSpec = projectSpec
+		//self.projectSpecData = try projectSpec?.specData()
 		
 		_targets = [
 			try await KivyProjectTarget(
 				name: name,
 				py_src: self.py_src,
-				dist_lib: (try await Path.distLib()).string
+				dist_lib: (try await Path.distLib(workingDir: workingDir)).string,
+				projectSpec: projectSpec,
+				workingDir: workingDir
 			)
 		]
 	}
@@ -283,7 +333,7 @@ public class KivyProject: PSProjectProtocol {
 	}
 	
 	public func packages() async throws -> [String : ProjectSpec.SwiftPackage] {
-		return [
+		var output: [String : ProjectSpec.SwiftPackage] = [
 			"SwiftonizePlugin": .remote(
 				url: "https://github.com/pythonswiftlink/SwiftonizePlugin",
 				versionRequirement: .branch("master")
@@ -291,8 +341,13 @@ public class KivyProject: PSProjectProtocol {
 			"KivySwiftLink": .remote(
 				url: "https://github.com/pythonswiftlink/KivySwiftLink",
 				versionRequirement: .branch("master")
-			)
+			),
+			
 		]
+		if let packageSpec = projectSpec {
+			try loadSwiftPackages(from: packageSpec, output: &output)
+		}
+		return output
 	}
 	
 	public func specOptions() async throws -> ProjectSpec.SpecOptions {
@@ -314,21 +369,21 @@ public class KivyProject: PSProjectProtocol {
 	}
 	
 	public func projectBasePath() async throws -> PathKit.Path {
-		let base: Path = .current + "\(name).xcodeproj"
-		if !base.exists {
-			try! base.mkpath()
-		}
-		return base
+//		let base: Path = workingDir + "\(name).xcodeproj"
+//		if !base.exists {
+//			try! base.mkpath()
+//		}
+		return workingDir
 	}
 	public func createStructure() async throws {
-		let current = Path.current
+		let current = workingDir
 		
-		try? (current + "YourApp").mkdir()
+		try? (current + "Resources/YourApp").mkpath()
 		try? (current + "wrapper_sources").mkdir()
-		try? (current + "Resources").mkdir()
+		//try? (current + "Resources").mkdir()
 		
-		let python_lib = try await Path.pythonLib()
-		let move_lib: Path = .current + "lib"
+		let python_lib = try await Path.pythonLib(workingDir: workingDir)
+		let move_lib: Path = pythonLibPath //current + "lib"
 		if move_lib.exists {
 			try move_lib.delete()
 		}
@@ -338,34 +393,53 @@ public class KivyProject: PSProjectProtocol {
 		if let requirements = requirements {
 			let site_path: Path = move_lib + "python3.10/site-packages"
 			let reqPath: Path
-			if requirements.hasPrefix("/") || requirements.hasPrefix("./") {
-				reqPath = .init(requirements)
-			} else {
-				reqPath = .current + requirements
-			}
+			//if requirements.hasPrefix("/") || requirements.hasPrefix(".") {
+			reqPath = .init(requirements)
+			//} else {
+				//reqPath = current + requirements
+			//}
 				
 			print("pip installing: \(reqPath)")
 			
 			pipInstall(reqPath, site_path: site_path)
 		}
 		
-		try patchPythonLib(dist: try await Path.distLib())
-		let kivyAppFiles = current + "KivyAppFiles"
+		
+		
+		try patchPythonLib(pythonLib: pythonLibPath, dist: try await Path.distLib(workingDir: workingDir))
+		let kivyAppFiles: Path = workingDir + "KivyAppFiles"
 		if kivyAppFiles.exists {
 			try kivyAppFiles.delete()
 		}
-		gitClone("https://github.com/PythonSwiftLink/KivyAppFiles")
-		let sourcesPath = Path.current + "Sources"
+		workingDir.chdir {
+			gitClone("https://github.com/PythonSwiftLink/KivyAppFiles")
+		}
+		
+		let sourcesPath = current + "Sources"
 		if sourcesPath.exists {
 			try sourcesPath.delete()
 		}
 		try (kivyAppFiles + "Sources").move(sourcesPath)
+		if let spec = projectSpec {
+			
+			try? loadRequirementsFiles(from: spec, site_path: move_lib + "python3.10/site-packages")
+			
+			var imports = [String]()
+			var pyswiftProducts = [String]()
+			
+			if try loadPythonPackageInfo(from: spec, imports: &imports, pyswiftProducts: &pyswiftProducts) {
+				
+				let mainFile = sourcesPath + "Main.swift"
+				let newMain = ModifyMainFile(source: try mainFile.read(), imports: imports, pyswiftProducts: pyswiftProducts)
+				try mainFile.write(newMain, encoding: .utf8)
+			}
+		}
 		
 		if local_py_src {
 			try? (current + "py_src").mkdir()
 		} else {
 			//try Path(py_src).symlink((current + "py_src"))
-			try (current + "py_src").symlink(.init(py_src))
+			try? (current + "py_src").symlink(.init(py_src))
 		}
 		// clean up
 		
@@ -379,7 +453,7 @@ public class KivyProject: PSProjectProtocol {
 	
 	public func project() async throws -> ProjectSpec.Project {
 		return Project(
-			basePath: .current,
+			basePath: workingDir,
 			name: name,
 			configs: try await configs(),
 			targets: try await targets(),
@@ -400,20 +474,20 @@ public class KivyProject: PSProjectProtocol {
 	public func generate() async throws {
 		let project = try await project()
 		let fw = FileWriter(project: project)
-		
 		let projectGenerator = ProjectGenerator(project: project)
 		
 		guard let userName = ProcessInfo.processInfo.environment["LOGNAME"] else {
 			throw KivyCreateError.missingUsername
 		}
 		
-		let xcodeProject = try projectGenerator.generateXcodeProject(in: .current, userName: userName)
+		let xcodeProject = try projectGenerator.generateXcodeProject(in: workingDir, userName: userName)
 		
 		try fw.writePlists()
 		//
 		
 		try fw.writeXcodeProject(xcodeProject)
-		
+		try await NSWorkspace.shared.open([project.defaultProjectPath.url], withApplicationAt: .applicationDirectory.appendingPathComponent("Xcode.app"), configuration: .init())
+		//NSWorkspace.shared.openFile(project.defaultProjectPath.string, withApplication: "Xcode")
 	}
 }
 

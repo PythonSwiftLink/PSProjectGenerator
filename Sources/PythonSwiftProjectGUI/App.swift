@@ -1,10 +1,10 @@
 import SwiftUI
 
-@main
-struct pspApp: App {
-	var body: some Scene {
-		WindowGroup {
-			ContentView()
-		}
-	}
-}
+//@main
+//struct pspApp: App {
+//	var body: some Scene {
+//		WindowGroup {
+//			ContentView()
+//		}
+//	}
+//}

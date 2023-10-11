@@ -15,6 +15,9 @@ let package = Package(
 		.package(url: "https://github.com/yonaskolb/XcodeGen.git", from: "2.37.0"),
 		.package(url: "https://github.com/1024jp/GzipSwift", from: .init(6, 0, 0)),
 		.package(url: "https://github.com/marmelroy/Zip", from: .init(2, 1, 0)),
+		.package(url: "https://github.com/apple/swift-syntax.git", .upToNextMajor(from: .init(508, 0, 0))),
+		
+		
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -26,7 +29,11 @@ let package = Package(
 				.product(name: "XcodeGenKit", package: "XcodeGen"),
 				.product(name: "ProjectSpec", package: "XcodeGen"),
 				.product(name: "Gzip", package: "GzipSwift"),
-				.product(name: "Zip", package: "Zip")
+				.product(name: "Zip", package: "Zip"),
+				.product(name: "SwiftSyntax", package: "swift-syntax"),
+				.product(name: "SwiftParser", package: "swift-syntax"),
+				.product(name: "SwiftSyntaxParser", package: "swift-syntax"),
+				.product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
 			]
 			
 			),

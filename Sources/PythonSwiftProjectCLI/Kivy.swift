@@ -17,7 +17,7 @@ extension PythonSwiftProjectCLI {
 		
 		
 		static var configuration: CommandConfiguration = .init(
-			subcommands: [Create.self]
+			subcommands: [Create.self, GenerateSpec.self]
 		)
 		
 		
