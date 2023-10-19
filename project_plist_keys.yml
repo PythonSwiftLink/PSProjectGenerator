@@ -10,7 +10,8 @@ UISupportedInterfaceOrientations-ipad:
   - UIInterfaceOrientationPortrait
   - UIInterfaceOrientationPortraitUpsideDown
 
-
 UIStatusBarHidden: True
 
 UILaunchStoryboardName: Launch Screen
+
+UIApplicationSupportsIndirectInputEvents: Yes #?
