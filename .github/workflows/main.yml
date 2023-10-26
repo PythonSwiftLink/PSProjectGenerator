@@ -34,7 +34,7 @@ jobs:
               swift build -c release --disable-sandbox --arch arm64 --arch x86_64 --product PSProjectCLI
               mkdir release
               cp -rf .build/apple/Products/Release/PSProjectCLI release/PSProject
-  
+              cp -rf .build/apple/Products/Release/PythonSwiftProject_PSProjectGen.bundle release/
               tar -C ./release/ -czvf ./PSProject.tar.gz ./    
       
       - name: Set SHA256
