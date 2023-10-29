@@ -218,7 +218,7 @@ extension AssetsDownloader {
 			// https://github.com/PythonSwiftLink/KivyNumpy/releases/download/310.1.0/numpy_dist.zip
 			// https://github.com/\(owner)/\(repo)/releases/latest/download/\(asset.asset)
 			if let url: URL = .init(string: "https://github.com/\(owner)/\(repo)/releases/latest/download/\(asset.asset)") {
-				//print(url)
+				print("downloading <\(url)>:")
 				var download: Path = .init( try await download(url: url ).path() )
 				let new_loc = temp + asset.asset
 				try download.move(new_loc)

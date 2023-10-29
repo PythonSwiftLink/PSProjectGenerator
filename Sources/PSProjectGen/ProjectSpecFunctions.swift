@@ -83,6 +83,11 @@ func loadExtraPipFolders(from projectSpec: PathKit.Path, pips: inout [ProjectSpe
 	}
 }
 
+func loadBasePlistKeys(from url: URL,  keys: inout [String:Any]) throws {
+	
+	guard let spec = try Yams.load(yaml: .init(contentsOf: url)) as? [String: Any] else { return }
+	keys.merge(spec)
+}
 
 func loadBuildConfigKeys(from projectSpec: PathKit.Path, keys: inout [String:Any]) throws {
 	// DEVELOPMENT_TEAM

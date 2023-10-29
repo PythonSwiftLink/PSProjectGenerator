@@ -37,7 +37,8 @@ let package = Package(
 				.product(name: "Yams", package: "Yams"),
 			],
 			resources: [
-				.copy("downloads.yml")
+				.copy("downloads.yml"),
+				.copy("project_plist_keys.yml")
 			]
 			
 			),
