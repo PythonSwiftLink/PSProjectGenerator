@@ -13,6 +13,7 @@ func loadSwiftPackages(from packageSpec: PathKit.Path, output: inout [String: Sw
 			output[ref] = try SwiftPackage(jsonDictionary: package)
 		}
 	}
+	
 }
 
 func loadSwiftPackages(from spec: SpecData, output: inout [String: SwiftPackage]) throws {

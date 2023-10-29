@@ -23,7 +23,7 @@ numpy:
       type: dist_folder
       extract_name: dist_lib
 
-    - asset: numpy-site.zip
+    - asset: numpy_site.zip
       type: site_package
       extract_name: numpy-site
 

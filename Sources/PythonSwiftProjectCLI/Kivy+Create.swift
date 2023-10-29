@@ -42,7 +42,10 @@ extension PythonSwiftProjectCLI.Kivy {
 
 			pip_requirements:
 				# - path: /path/to/requirements.txt
-
+			
+			toolchain_recipes:
+				# - pillow
+				
 			""".replacingOccurrences(of: "\t", with: "    "), encoding: .utf8)
 		}
 	}
@@ -67,11 +70,13 @@ extension PythonSwiftProjectCLI.Kivy {
 			}
 			try? projDir.mkdir()
 			//chdir(projDir.string)
+			let projectSpec: Path? = if let swift_packages = swift_packages {.init(swift_packages)} else { nil }
 			let proj = try await KivyProject(
 				name: name,
 				py_src: python_src,
 				requirements: requirements,
-				projectSpec: swift_packages == nil ? nil : .init(swift_packages!),
+				//projectSpec: swift_packages == nil ? nil : .init(swift_packages!),
+				projectSpec: projectSpec,
 				workingDir: projDir
 			)
 			

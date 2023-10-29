@@ -47,6 +47,36 @@ func downloadZipUnPacked(url: URL, dst: Path) async throws -> Path {
 //	debugPrint(try JSONSerialization.jsonObject(with: releases))
 //}
 
+public protocol KSLReleaseProtocol {
+	func downloadFiles() async throws -> [URL]?
+}
+
+public struct ReleaseAssetDownloader {
+	
+	class KivyCore: KSLReleaseProtocol {
+		
+		init() {
+			
+		}
+		
+		
+		func downloadFiles() async throws -> [URL]? {
+			let kivy_release = try await loadGithub(owner: "PythonSwiftLink", repo: "KivyCore")
+			if let release = kivy_release.releases.first  {
+				let zips = release.assets.compactMap { r in
+					URL(string: r.browser_download_url )
+				}
+				return zips
+			}
+			
+			return nil
+		}
+	}
+	
+}
+
+
+
 public class SiteFilesDownload {
 	enum SiteFolders: String {
 		case kivy = "site-packages"

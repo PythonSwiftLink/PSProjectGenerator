@@ -32,9 +32,10 @@ public struct SpecData: Decodable {
 	let development_team: DevelopmentTeamData?
 	let info_plist: [String:String]?
 	let pip_folders: [PipFolder]?
+	let pips: [String]?
 	let pip_requirements: [PipRequirement]?
 	let packages: [String: SwiftPackageData]?
-	
+	let recipes: [String]?
 }
 
 import Yams
