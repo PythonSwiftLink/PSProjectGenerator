@@ -94,8 +94,8 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 			//			.init(type: .package(product: "PySwiftObject"), reference: "KivySwiftLink"),
 			//			.init(type: .package(product: "PythonSwiftCore"), reference: "KivySwiftLink"),
 			//			.init(type: .package(product: "KivyLauncher"), reference: "KivySwiftLink"),
-			.init(type: .package(product: "PySwiftObject"), reference: "PythonSwiftLink"),
-			.init(type: .package(product: "PythonSwiftCore"), reference: "PythonSwiftLink"),
+			.init(type: .package(product: "PySwiftObject"), reference: "KivySwiftLink"),
+			.init(type: .package(product: "PythonSwiftCore"), reference: "KivySwiftLink"),
 			.init(type: .package(product: "KivyCore"), reference: "KivyCore")
 			
 		]
