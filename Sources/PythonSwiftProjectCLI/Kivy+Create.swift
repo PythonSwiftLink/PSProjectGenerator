@@ -57,6 +57,8 @@ extension PythonSwiftProjectCLI.Kivy {
 		@Option(name: .short) var swift_packages: String?
 		
 		func run() async throws {
+//			try await GithubAPI(owner: "PythonSwiftLink", repo: "KivyCore").handleReleases()
+//			return
 			let projDir = (Path.current + name)
 			try? projDir.mkdir()
 			//chdir(projDir.string)
