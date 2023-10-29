@@ -211,21 +211,30 @@ public class KivyProject: PSProjectProtocol {
 	}
 	
 	public func packages() async throws -> [String : ProjectSpec.SwiftPackage] {
+		var releases = try await GithubAPI(owner: "PythonSwiftLink", repo: "KivyCore")
+		try await releases.handleReleases()
+		guard let latest = releases.releases.first else { throw CocoaError(.coderReadCorrupt) }
 		var output: [String : ProjectSpec.SwiftPackage] = [
 			"SwiftonizePlugin": .remote(
 				url: "https://github.com/pythonswiftlink/SwiftonizePlugin",
 				versionRequirement: .branch("master")
 			),
-			
+			"KivyPythonCore": .remote(
+				url: "https://github.com/pythonswiftlink/KivyPythonCore",
+				versionRequirement: .exact(latest.tag_name)
+			),
 			"KivyCore": .remote(
 				url: "https://github.com/pythonswiftlink/KivyCore",
-				versionRequirement: .upToNextMajorVersion("311.0.0")
+				versionRequirement: .exact(latest.tag_name)
 			),
 			"KivySwiftLink": .remote(
 				url: "https://github.com/pythonswiftlink/KivySwiftLink",
 				versionRequirement: .upToNextMajorVersion("311.0.0")
 			),
-			
+			"KivyLauncher": .remote(
+				url: "https://github.com/pythonswiftlink/KivyLauncher",
+				versionRequirement: .upToNextMajorVersion("311.0.0")
+			),
 			
 		]
 		if let packageSpec = projectSpec {

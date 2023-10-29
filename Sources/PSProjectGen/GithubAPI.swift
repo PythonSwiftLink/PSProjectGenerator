@@ -38,9 +38,9 @@ public struct GithubAPI {
 		releases = try JSONDecoder().decode([Release].self, from: releasesData)
 	}
 	
-	public func handleReleases() async throws {
+	public mutating func handleReleases() async throws {
 		let releasesData: Data = try await download(url: releasesURL)
-		let releases = try JSONDecoder().decode([Release].self, from: releasesData)
+		releases = try JSONDecoder().decode([Release].self, from: releasesData)
 //		let releases = try JSONSerialization.jsonObject(with: releasesData) as! [[String: Any]]
 		if let release = releases.first {
 			
@@ -52,9 +52,9 @@ public struct GithubAPI {
 //			if let first_asset = assets.first {
 //				debugPrint(first_asset.keys)
 //			}
-			for asset in release.assets {
-				print(asset.name, asset.browser_download_url)
-			}
+//			for asset in release.assets {
+//				print(asset.name, asset.browser_download_url)
+//			}
 		}
 		
 	}

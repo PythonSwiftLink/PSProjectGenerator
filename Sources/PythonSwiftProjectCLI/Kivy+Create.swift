@@ -56,10 +56,15 @@ extension PythonSwiftProjectCLI.Kivy {
 		
 		@Option(name: .short) var swift_packages: String?
 		
+		@Flag(name: .short) var forced: Bool = false
+		
 		func run() async throws {
 //			try await GithubAPI(owner: "PythonSwiftLink", repo: "KivyCore").handleReleases()
 //			return
 			let projDir = (Path.current + name)
+			if forced, projDir.exists {
+				try? projDir.delete()
+			}
 			try? projDir.mkdir()
 			//chdir(projDir.string)
 			let proj = try await KivyProject(

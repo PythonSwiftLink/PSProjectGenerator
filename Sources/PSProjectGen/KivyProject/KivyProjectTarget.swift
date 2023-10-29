@@ -75,8 +75,6 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 			.init(path: "Resources/YourApp", group: "Resources", type: .file, buildPhase: .resources, createIntermediateGroups: true),
 			//.init(path: pythonLibPath.string, group: "Resources", type: .file, buildPhase: .resources, createIntermediateGroups: true),
 			.init(path: "Resources/site-packages", name: "site-packages", type: .file, buildPhase: .resources ,createIntermediateGroups: true),
-			//.init(path: "Resources/dylib-Info-template.plist"),
-			//.init(path: "Resources/python-stdlib", group: "Resources", type: .file, buildPhase: .resources),
 			.init(path: "Resources/Launch Screen.storyboard"),
 			.init(path: "Resources/Images.xcassets"),
 			.init(path: "Resources/icon.png"),
@@ -96,7 +94,9 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 			//			.init(type: .package(product: "KivyLauncher"), reference: "KivySwiftLink"),
 			.init(type: .package(product: "PySwiftObject"), reference: "KivySwiftLink"),
 			.init(type: .package(product: "PythonSwiftCore"), reference: "KivySwiftLink"),
-			.init(type: .package(product: "KivyCore"), reference: "KivyCore")
+			.init(type: .package(product: "KivyCore"), reference: "KivyCore"),
+			.init(type: .package(product: "KivyLauncher"), reference: "KivyLauncher"),
+			
 			
 		]
 		if let packageSpec = projectSpec {
