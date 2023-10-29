@@ -24,6 +24,7 @@ class Psproject < Formula
 
   def install
     bin.install "PSProject"
+    bin.install "PythonSwiftProject_PSProjectGen.bundle"
     end
 
   test do
