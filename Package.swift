@@ -16,12 +16,12 @@ let package = Package(
 		.package(url: "https://github.com/1024jp/GzipSwift", from: .init(6, 0, 0)),
 		.package(url: "https://github.com/marmelroy/Zip", from: .init(2, 1, 0)),
 		.package(url: "https://github.com/apple/swift-syntax.git", .upToNextMajor(from: .init(508, 0, 0))),
-		
-		
+		.package(url: "https://github.com/jpsim/Yams.git", .upToNextMajor(from: "5.0.6")),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
+		
 		.target(
 			name: "PSProjectGen",
 			
@@ -34,6 +34,10 @@ let package = Package(
 				.product(name: "SwiftParser", package: "swift-syntax"),
 				.product(name: "SwiftSyntaxParser", package: "swift-syntax"),
 				.product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+				.product(name: "Yams", package: "Yams"),
+			],
+			resources: [
+				.copy("downloads.yml")
 			]
 			
 			),
