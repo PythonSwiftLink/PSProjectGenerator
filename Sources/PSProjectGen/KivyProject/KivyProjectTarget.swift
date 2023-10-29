@@ -159,14 +159,14 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 	
 	public func postBuildScripts() async throws -> [ProjectSpec.BuildScript] {
 		[
-			.init(
-				script: .script(PURGE_PYTHON_BINARY),
-				name: "Purge Python Binary Modules for Non-Target Platforms"
-			),
-			.init(
-				script: .script(SIGN_PYTHON_BINARY),
-				name: "Sign Python Binary Modules"
-			)
+//			.init(
+//				script: .script(PURGE_PYTHON_BINARY),
+//				name: "Purge Python Binary Modules for Non-Target Platforms"
+//			),
+//			.init(
+//				script: .script(SIGN_PYTHON_BINARY),
+//				name: "Sign Python Binary Modules"
+//			)
 		]
 	}
 	
