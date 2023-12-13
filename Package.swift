@@ -12,6 +12,7 @@ let package = Package(
 	],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
+		.package(url: "https://github.com/tuist/XcodeProj.git", exact: "8.15.0"),
 		.package(url: "https://github.com/yonaskolb/XcodeGen.git", exact: "2.37.0"),
 		.package(url: "https://github.com/1024jp/GzipSwift", from: .init(6, 0, 0)),
 		.package(url: "https://github.com/marmelroy/Zip", from: .init(2, 1, 0)),
