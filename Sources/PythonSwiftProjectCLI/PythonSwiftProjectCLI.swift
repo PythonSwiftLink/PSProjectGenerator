@@ -10,7 +10,7 @@ import ArgumentParser
 struct PythonSwiftProjectCLI: AsyncParsableCommand {
 	
 	static var configuration: CommandConfiguration = .init(
-		version: "0.0.6",
+		version: "0.0.7",
 		subcommands: [Kivy.self, SwiftUI.self]
 	)
 	
