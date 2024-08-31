@@ -35,7 +35,7 @@ public struct SpecData: Decodable {
 	let pips: [String]?
 	let pip_requirements: [PipRequirement]?
 	let packages: [String: SwiftPackageData]?
-	let recipes: [String]?
+	let toolchain_recipes: [String]?
 }
 
 import Yams

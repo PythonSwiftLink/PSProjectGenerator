@@ -17,7 +17,7 @@ func download(url: URL) async throws -> Data {
 }
 
 func download(url: URL) async throws -> URL {
-	let (downloadURL, response) = try await URLSession.shared.download(from: url)
+	let (downloadURL, _) = try await URLSession.shared.download(from: url)
 	return downloadURL
 }
 
@@ -64,12 +64,56 @@ public struct ReleaseAssetDownloader {
 			let kivy_release = try await loadGithub(owner: "PythonSwiftLink", repo: "KivyCore")
 			if let release = kivy_release.releases.first  {
 				let zips = release.assets.compactMap { r in
-					URL(string: r.browser_download_url )
+					switch r.name {
+					case "site-packages.zip", "kivy_dist.zip":
+						
+						return URL(string: r.browser_download_url )
+					default: return nil
+					}
+					
 				}
 				return zips
 			}
 			
 			return nil
+		}
+	}
+	
+	class KivyExtra: KSLReleaseProtocol {
+		
+		let recipes: [String]
+		
+		init(recipes: [String]) {
+			self.recipes = recipes
+		}
+		
+		
+		func downloadFiles() async throws -> [URL]? {
+			guard let kivy_release = try await loadGithub(owner: "PythonSwiftLink", repo: "KivyExtra").releases.first else {
+				return nil
+			}
+			var output: [URL] = []
+			for recipe in recipes.lazy.map(\.localizedLowercase).compactMap(\.kivy_extra_name) {
+				if let dist_asset = kivy_release.assets.first(where: {$0.name == "\(recipe)_dist.zip"}) {
+					let dest: URL = try await download(url: .init(string: dist_asset.browser_download_url)!)
+					output.append(dest)
+				}
+				if let site_asset = kivy_release.assets.first(where: {$0.name == "\(recipe)_site.zip"}) {
+					let dest: URL = try await download(url: .init(string: site_asset.browser_download_url)!)
+					output.append(dest)
+				}
+				switch recipe {
+				case .kiwisolver: break
+				case .ffpyplayer: break
+				case .ffmpeg: break
+				case .pillow: break
+				case .materialyoucolor: break
+				case .matplotlib: break
+				}
+				
+			}
+			
+			return output
 		}
 	}
 	
@@ -113,6 +157,13 @@ public class SiteFilesDownload {
 	
 }
 
+extension String {
+	var kivy_extra_name: recipeKeys? { .init(rawValue: self) }
+}
+
+extension Array where Element == String {
+	
+}
 
 public class DistFilesDownload {
 	enum DistTargets: String {

@@ -6,15 +6,15 @@ import ProjectSpec
 import Yams
 
 
-public let recipeKeys = [
-	"kiwisolver": "KiwiSolver",
-	"ffmpeg": "FFMpeg",
-	"ffpyplayer": "FFPyplayer",
-	"matplotlib": "MatPlotLib",
-	"materialyoucolor": "MaterialYouColor",
-	"pillow": "Pillow",
+public enum recipeKeys: String {
+	case kiwisolver
+	case ffmpeg
+	case ffpyplayer
+	case matplotlib
+	case materialyoucolor
+	case pillow
 	
-]
+}
 
 public class KivyProjectTarget: PSProjTargetProtocol {
 	
@@ -116,7 +116,7 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 			try loadPackageDependencies(from: packageSpec, output: &output)
 		}
 		
-		if let recipes = project?.projectSpecData?.recipes {
+		if let recipes = project?.projectSpecData?.toolchain_recipes {
 			for recipe in recipes {
 				output.append(.init(type: .package(product: recipe), reference: "KivyExtra"))
 			}

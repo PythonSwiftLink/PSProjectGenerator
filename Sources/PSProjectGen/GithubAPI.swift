@@ -78,4 +78,10 @@ extension GithubAPI {
 		let size: Int
 		let content_type: String
 	}
+	
+	
 }
+
+extension GithubAPI.ReleaseAsset {
+	var url: URL? { .init(string: browser_download_url) }
+	}

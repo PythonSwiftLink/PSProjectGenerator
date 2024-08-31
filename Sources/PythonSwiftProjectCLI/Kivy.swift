@@ -7,7 +7,13 @@
 
 import Foundation
 import ArgumentParser
+import PathKit
 
+extension PathKit.Path: ExpressibleByArgument {
+	public init?(argument: String) {
+		self.init(argument)
+	}
+}
 
 extension PythonSwiftProjectCLI {
 	
@@ -17,7 +23,7 @@ extension PythonSwiftProjectCLI {
 		
 		
 		static var configuration: CommandConfiguration = .init(
-			subcommands: [Create.self, GenerateSpec.self]
+			subcommands: [Create.self, GenerateSpec.self, Patch.self, Recipe.self]
 		)
 		
 		
