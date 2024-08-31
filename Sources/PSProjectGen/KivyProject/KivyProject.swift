@@ -11,6 +11,7 @@ import PathKit
 import XcodeGenKit
 import ProjectSpec
 import Yams
+import RecipeBuilder
 
 enum KivyCreateError: Error, CustomStringConvertible {
 	case missingProjectSpec(Path)
@@ -102,17 +103,22 @@ extension PathKit.Path {
 	
 }
 
-func patchPythonLib(pythonLib: Path, dist: Path) throws {
+public func patchPythonLib(pythonLib: Path, dist: Path) throws {
 	let lib = pythonLib //workingDir + "lib"
 	let libs = lib.iterateChildren().filter( {$0.extension == "libs"} )
 	try libs.forEach { file in
-		print("patching: \(file.string)")
+		//print("patching: \(file.string)")
 		var content = try String(contentsOf: file.url)
 		// /Users/runner/work/KivyCoreBuilder/KivyCoreBuilder/dist/lib/iphoneos
-		content = content.replacingOccurrences(
-			of: "/Users/runner/work/KivyCoreBuilder/KivyCoreBuilder/dist/lib",
-			with: "\(dist.string)"
-		)
+		
+		
+		if let result = try SoLibsFile(file: file, dist_lib: dist).output {
+			content = result
+		}
+//		content = content.replacingOccurrences(
+//			of: "/Users/runner/work/KivyCoreBuilder/KivyCoreBuilder/dist/lib",
+//			with: "\(dist.string)"
+//		)
 //		content = content.replacingOccurrences(
 //			of: "Xcode_15.0.app",
 //			with: "Xcode.app"
@@ -120,7 +126,7 @@ func patchPythonLib(pythonLib: Path, dist: Path) throws {
 		let xcode_regex = try Regex("Xcode.*.app")
 		content = content.replacing(xcode_regex, with: "Xcode.app")
 		
-		print(content)
+		//print(content)
 		try file.write(content, encoding: .utf8)
 	}
 }

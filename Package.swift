@@ -12,11 +12,15 @@ let package = Package(
 	],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
-		.package(url: "https://github.com/yonaskolb/XcodeGen.git", from: "2.37.0"),
+		.package(url: "https://github.com/tuist/XcodeProj.git", exact: "8.15.0"),
+		.package(url: "https://github.com/yonaskolb/XcodeGen.git", exact: "2.37.0"),
 		.package(url: "https://github.com/1024jp/GzipSwift", from: .init(6, 0, 0)),
 		.package(url: "https://github.com/marmelroy/Zip", from: .init(2, 1, 0)),
 		.package(url: "https://github.com/apple/swift-syntax.git", .upToNextMajor(from: .init(508, 0, 0))),
 		.package(url: "https://github.com/jpsim/Yams.git", .upToNextMajor(from: "5.0.6")),
+		.package(url: "https://github.com/PythonSwiftLink/SwiftPackageGen", from: .init(0, 0, 3)),
+		//.package(path: "/Volumes/CodeSSD/XcodeGithub/SwiftPackageGen")
+		
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -35,6 +39,7 @@ let package = Package(
 				.product(name: "SwiftSyntaxParser", package: "swift-syntax"),
 				.product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
 				.product(name: "Yams", package: "Yams"),
+				.product(name: "RecipeBuilder", package: "SwiftPackageGen")
 			],
 			resources: [
 				.copy("downloads.yml"),
@@ -58,7 +63,9 @@ let package = Package(
 //				.product(name: "ProjectSpec", package: "XcodeGen"),
 				"PSProjectGen",
 				.product(name: "Gzip", package: "GzipSwift"),
-				.product(name: "Zip", package: "Zip")
+				.product(name: "Zip", package: "Zip"),
+				.product(name: "GeneratePackage", package: "SwiftPackageGen"),
+				.product(name: "RecipeBuilder", package: "SwiftPackageGen")
             ]
         ),
     ]

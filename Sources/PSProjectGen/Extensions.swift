@@ -11,10 +11,8 @@ public extension PathKit.Path {
 }
 
 
-extension PathKit.Path: Decodable {
-	public init(from decoder: Decoder) throws {
-		self = .init(try decoder.singleValueContainer().decode(String.self))
-	}
+extension PathKit.Path {
+
 	public init(_ url: URL) {
 		self = .init(url.path())
 	}
