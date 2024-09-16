@@ -5,17 +5,6 @@ import XcodeGenKit
 import ProjectSpec
 import Yams
 
-
-public enum recipeKeys: String {
-	case kiwisolver
-	case ffmpeg
-	case ffpyplayer
-	case matplotlib
-	case materialyoucolor
-	case pillow
-	
-}
-
 public class KivyProjectTarget: PSProjTargetProtocol {
 	
 	public var name: String
@@ -29,8 +18,6 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 	let workingDir: Path
 	let resourcesPath: Path
 	let pythonLibPath: Path
-	
-	weak var project: KivyProject?
 	
 	public init(name: String, py_src: String, dist_lib: String, projectSpec: Path?, workingDir: Path) async throws {
 		self.name = name
@@ -104,9 +91,9 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 		var output: [ProjectSpec.Dependency] = [
 			//			.init(type: .package(product: "PySwiftObject"), reference: "KivySwiftLink"),
 			//			.init(type: .package(product: "PythonSwiftCore"), reference: "KivySwiftLink"),
-			.init(type: .package(product: "KivyLauncher"), reference: "KivySwiftLink"),
-			.init(type: .package(product: "PySwiftObject"), reference: "PythonSwiftLink"),
-			.init(type: .package(product: "PySwiftCore"), reference: "PythonSwiftLink"),
+			//			.init(type: .package(product: "KivyLauncher"), reference: "KivySwiftLink"),
+			.init(type: .package(product: "PySwiftObject"), reference: "KivySwiftLink"),
+			.init(type: .package(product: "PythonSwiftCore"), reference: "KivySwiftLink"),
 			.init(type: .package(product: "KivyCore"), reference: "KivyCore"),
 			.init(type: .package(product: "KivyLauncher"), reference: "KivyLauncher"),
 			
@@ -114,12 +101,6 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 		]
 		if let packageSpec = projectSpec {
 			try loadPackageDependencies(from: packageSpec, output: &output)
-		}
-		
-		if let recipes = project?.projectSpecData?.toolchain_recipes {
-			for recipe in recipes {
-				output.append(.init(type: .package(product: recipe), reference: "KivyExtra"))
-			}
 		}
 		
 		return output

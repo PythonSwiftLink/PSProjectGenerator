@@ -1,0 +1,17 @@
+UISupportedInterfaceOrientations:
+  - UIInterfaceOrientationLandscapeLeft
+  - UIInterfaceOrientationLandscapeRight
+  - UIInterfaceOrientationPortrait
+  - UIInterfaceOrientationPortraitUpsideDown
+
+UISupportedInterfaceOrientations-ipad:
+  - UIInterfaceOrientationLandscapeLeft
+  - UIInterfaceOrientationLandscapeRight
+  - UIInterfaceOrientationPortrait
+  - UIInterfaceOrientationPortraitUpsideDown
+
+UIStatusBarHidden: True
+
+UILaunchStoryboardName: Launch Screen
+
+UIApplicationSupportsIndirectInputEvents: Yes #?

@@ -17,18 +17,10 @@ func download(url: URL) async throws -> Data {
 }
 
 func download(url: URL) async throws -> URL {
-	let (downloadURL, _) = try await URLSession.shared.download(from: url)
+	let (downloadURL, response) = try await URLSession.shared.download(from: url)
 	return downloadURL
 }
 
-func downloadAsset(url: URL) async throws -> URL {
-	let (downloadURL, _) = try await URLSession.shared.download(from: url)
-	let downloadPath = Path(downloadURL)
-	let filename = url.lastPathComponent
-	let new_url = downloadURL.deletingLastPathComponent().appending(path: filename)
-	try? downloadPath.move(Path(new_url))
-	return new_url
-}
 
 func downloadZipUnPacked(url: String, dst: Path) async throws -> Path {
 	let download: Path = .init( try await download(url: .init(string: url)! ).path() )
@@ -54,86 +46,6 @@ func downloadZipUnPacked(url: URL, dst: Path) async throws -> Path {
 //	let releases: Data = try await download(url: .init(string: url)! )
 //	debugPrint(try JSONSerialization.jsonObject(with: releases))
 //}
-
-public protocol KSLReleaseProtocol {
-	func downloadFiles() async throws -> [URL]?
-}
-
-public struct ReleaseAssetDownloader {
-	
-	class KivyCore: KSLReleaseProtocol {
-		
-		init() {
-			
-		}
-		
-		
-		func downloadFiles() async throws -> [URL]? {
-			var outputs = [URL]()
-			let kivy_release = try await loadGithub(owner: "KivySwiftLink", repo: "KivyCore")
-			if let release = kivy_release.releases.first  {
-				let zips = release.assets.compactMap { r in
-					switch r.name {
-					case "site-packages.zip", "kivy_dist.zip":
-						
-						return URL(string: r.browser_download_url )
-					default: return nil
-					}
-					
-				}
-				for zip in zips {
-					let dest: URL = try await downloadAsset(url: zip)
-					outputs.append(dest)
-				}
-				
-				return outputs
-			}
-			
-			return nil
-		}
-	}
-	
-	class KivyExtra: KSLReleaseProtocol {
-		
-		let recipes: [String]
-		
-		init(recipes: [String]) {
-			self.recipes = recipes
-		}
-		
-		
-		func downloadFiles() async throws -> [URL]? {
-			guard let kivy_release = try await loadGithub(owner: "PythonSwiftLink", repo: "KivyExtra").releases.first else {
-				return nil
-			}
-			var output: [URL] = []
-			for recipe in recipes.lazy.map(\.localizedLowercase).compactMap(\.kivy_extra_name) {
-				if let dist_asset = kivy_release.assets.first(where: {$0.name == "\(recipe)_dist.zip"}) {
-					let dest: URL = try await download(url: .init(string: dist_asset.browser_download_url)!)
-					output.append(dest)
-				}
-				if let site_asset = kivy_release.assets.first(where: {$0.name == "\(recipe)_site.zip"}) {
-					let dest: URL = try await download(url: .init(string: site_asset.browser_download_url)!)
-					output.append(dest)
-				}
-				switch recipe {
-				case .kiwisolver: break
-				case .ffpyplayer: break
-				case .ffmpeg: break
-				case .pillow: break
-				case .materialyoucolor: break
-				case .matplotlib: break
-				}
-				
-			}
-			
-			return output
-		}
-	}
-	
-}
-
-
 
 public class SiteFilesDownload {
 	enum SiteFolders: String {
@@ -171,13 +83,6 @@ public class SiteFilesDownload {
 	
 }
 
-extension String {
-	var kivy_extra_name: recipeKeys? { .init(rawValue: self) }
-}
-
-extension Array where Element == String {
-	
-}
 
 public class DistFilesDownload {
 	enum DistTargets: String {
