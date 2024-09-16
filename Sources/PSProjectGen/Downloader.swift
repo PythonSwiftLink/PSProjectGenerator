@@ -103,7 +103,7 @@ public struct ReleaseAssetDownloader {
 		
 		
 		func downloadFiles() async throws -> [URL]? {
-			guard let kivy_release = try await loadGithub(owner: "PythonSwiftLink", repo: "KivyExtra").releases.first else {
+			guard let kivy_release = try await loadGithub(owner: "KivySwiftLink", repo: "KivyExtra").releases.first else {
 				return nil
 			}
 			var output: [URL] = []
