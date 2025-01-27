@@ -24,14 +24,22 @@ jobs:
       
     steps:
       - uses: actions/checkout@v4
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '15.0.1'
+      - name: Build x86_64    
+        run: swift build -c release --disable-sandbox --arch x86_64 --product PSProjectCLI
+      
+      - name: Build arm64    
+        run: swift build -c release --disable-sandbox --arch arm64 --product PSProjectCLI
+
+
       - name: Build Release    
         run: | 
-              swift build -c release --disable-sandbox --arch arm64 --arch x86_64 --product PSProjectCLI
+              X64BIN=".build/x86_64-apple-macosx/release/PSProjectCLI"
+              ARMBIN=".build/arm64-apple-macosx/release/PSProjectCLI"
+              
+              #swift build -c release --disable-sandbox --arch arm64 --arch x86_64 --product PSProjectCLI
               mkdir release
-              cp -rf .build/apple/Products/Release/PSProjectCLI release/PSProject
+              lipo -create $X64BIN $ARMBIN -output release/PSProject
+              #cp -rf .build/apple/Products/Release/PSProjectCLI release/PSProject
               cp -rf .build/apple/Products/Release/PythonSwiftProject_PSProjectGen.bundle release/
               tar -C ./release/ -czvf ./PSProject.tar.gz ./    
       
