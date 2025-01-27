@@ -41,7 +41,7 @@ jobs:
               mkdir release
               lipo -create $X64BIN $ARMBIN -output release/PSProject
               #cp -rf .build/apple/Products/Release/PSProjectCLI release/PSProject
-              cp -rf .build/apple/Products/Release/PythonSwiftProject_PSProjectGen.bundle release/
+              cp -rf .build/x86_64-apple-macosx/release/PythonSwiftProject_PSProjectGen.bundle release/
               tar -C ./release/ -czvf ./PSProject.tar.gz ./    
       
       - name: Set SHA256
