@@ -40,7 +40,14 @@ toolchain_recipes:
 """.replacingOccurrences(of: "\t", with: "    ")
 
 
-
+private func getAppLocation() -> Path? {
+    let local_bin = Path(ProcessInfo.processInfo.arguments.first!)
+    if local_bin.isSymlink {
+        return try? local_bin.symlinkDestination()
+    }
+    
+    return nil
+}
 
 extension PythonSwiftProjectCLI.Kivy {
 	
@@ -97,6 +104,9 @@ extension PythonSwiftProjectCLI.Kivy {
 //			try await GithubAPI(owner: "PythonSwiftLink", repo: "KivyCore").handleReleases()
 //			return
             
+            
+            guard let app_path = getAppLocation()?.parent() else { fatalError("App Folder not found")}
+            
             var src: Path? = python_src
             
             // check if relative and create full path to it..
@@ -124,7 +134,7 @@ extension PythonSwiftProjectCLI.Kivy {
 				//projectSpec: swift_packages == nil ? nil : .init(swift_packages!),
 				projectSpec: projectSpec,
                 workingDir: projDir,
-                app_path: .init(ProcessInfo.processInfo.arguments.first!).parent(),
+                app_path: app_path,
                 experimental: experimental
 			)
 			
