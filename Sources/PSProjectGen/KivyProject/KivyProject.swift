@@ -198,6 +198,7 @@ public class KivyProject: PSProjectProtocol {
 		_targets = [
 			
 		]
+        print(app_path)
         psp_bundle = Bundle(path: (app_path + "PythonSwiftProject_PSProjectGen.bundle").string )!
         
 		base_target.project = self
