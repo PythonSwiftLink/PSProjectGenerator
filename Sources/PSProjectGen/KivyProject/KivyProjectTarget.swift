@@ -19,9 +19,9 @@ public enum recipeKeys: String {
 public class KivyProjectTarget: PSProjTargetProtocol {
 	
 	public var name: String
-	public var pythonProject: String
+	public var pythonProject: Path
 	
-	var dist_lib: String
+	var dist_lib: Path
 	
 	public var projectSpec: Path?
 	//	var projectSpec: SpecData?
@@ -29,19 +29,24 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 	let workingDir: Path
 	let resourcesPath: Path
 	let pythonLibPath: Path
+	let app_path: Path
+    let experimental: Bool
 	
 	weak var project: KivyProject?
 	
-	public init(name: String, py_src: String, dist_lib: String, projectSpec: Path?, workingDir: Path) async throws {
+	
+	
+    public init(name: String, py_src: Path, dist_lib: Path, projectSpec: Path?, workingDir: Path, app_path: Path, experimental: Bool) async throws {
 		self.name = name
 		self.workingDir = workingDir
+		self.app_path = app_path
 		let resources = workingDir + "Resources"
 		self.resourcesPath = resources
 		self.pythonLibPath = resources + "lib"
 		self.pythonProject = py_src
 		self.dist_lib = dist_lib
 		self.projectSpec = projectSpec
-		print(dist_lib)
+        self.experimental = experimental
 	}
 	public func build() async throws {
 		
@@ -51,8 +56,7 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 		var configDict: [String: Any] = [
 			"LIBRARY_SEARCH_PATHS": [
 				"$(inherited)",
-				dist_lib
-			],
+            ] + ( experimental ? [] : [dist_lib]),
 			"SWIFT_VERSION": "5.0",
 			"OTHER_LDFLAGS": "-all_load",
 			"ENABLE_BITCODE": false
@@ -66,8 +70,8 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 		}
 		
 		return .init(configSettings: [
-			"debug": configSettings,
-			"release": configSettings
+			"Debug": configSettings,
+			"Release": configSettings
 		])
 	}
 	
@@ -104,11 +108,12 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 		var output: [ProjectSpec.Dependency] = [
 			//			.init(type: .package(product: "PySwiftObject"), reference: "KivySwiftLink"),
 			//			.init(type: .package(product: "PythonSwiftCore"), reference: "KivySwiftLink"),
-			.init(type: .package(product: "KivyLauncher"), reference: "KivySwiftLink"),
-			.init(type: .package(product: "PySwiftObject"), reference: "PythonSwiftLink"),
-			.init(type: .package(product: "PySwiftCore"), reference: "PythonSwiftLink"),
-			.init(type: .package(product: "KivyCore"), reference: "KivyCore"),
-			.init(type: .package(product: "KivyLauncher"), reference: "KivyLauncher"),
+			
+			.init(type: .package(products: ["KivyLauncher"]), reference: "KivySwiftLink"),
+			.init(type: .package(products: ["PySwiftObject"]), reference: "PythonSwiftLink"),
+			.init(type: .package(products: ["PySwiftCore"]), reference: "PythonSwiftLink"),
+			.init(type: .package(products: ["KivyCore"]), reference: "KivyCore"),
+			.init(type: .package(products: ["KivyLauncher"]), reference: "KivyLauncher"),
 			
 			
 		]
@@ -118,7 +123,7 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 		
 		if let recipes = project?.projectSpecData?.toolchain_recipes {
 			for recipe in recipes {
-				output.append(.init(type: .package(product: recipe), reference: "KivyExtra"))
+				output.append(.init(type: .package(products: [recipe]), reference: "KivyExtra"))
 			}
 		}
 		
@@ -130,9 +135,15 @@ public class KivyProjectTarget: PSProjTargetProtocol {
 			"UILaunchStoryboardName": "Launch Screen",
 			"UIRequiresFullScreen": true
 		]
-		if let projectPkeys = Bundle.module.url(forResource: "project_plist_keys", withExtension: "yml") {
-			try loadBasePlistKeys(from: projectPkeys, keys: &mainkeys)
+		if
+			let psp_bundle = Bundle(path: (app_path + "PythonSwiftProject_PSProjectGen.bundle").string ),
+			let _project_plist_keys = psp_bundle.path(forResource: "downloads", ofType: "yml")
+		{
+			try loadBasePlistKeys(from: .init(filePath: _project_plist_keys), keys: &mainkeys)
 		}
+//		if let projectPkeys = Bundle.module.url(forResource: "project_plist_keys", withExtension: "yml") {
+//			try loadBasePlistKeys(from: projectPkeys, keys: &mainkeys)
+//		}
 		if let packageSpec = projectSpec {
 			var extraKeys = [String:Any]()
 			

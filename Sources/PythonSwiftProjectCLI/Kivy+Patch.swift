@@ -32,7 +32,7 @@ extension PythonSwiftProjectCLI.Kivy {
 				return output
 			}
 			for site_folder in site_folders {
-				try patchPythonLib(pythonLib: site_folder, dist: distFolder)
+				try patchPythonLib(pythonLib: site_folder, dist: distFolder + "iphoneos")
 			}
 		}
 	}

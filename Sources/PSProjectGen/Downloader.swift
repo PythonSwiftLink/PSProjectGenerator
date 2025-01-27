@@ -25,8 +25,10 @@ func downloadAsset(url: URL) async throws -> URL {
 	let (downloadURL, _) = try await URLSession.shared.download(from: url)
 	let downloadPath = Path(downloadURL)
 	let filename = url.lastPathComponent
-	let new_url = downloadURL.deletingLastPathComponent().appending(path: filename)
-	try? downloadPath.move(Path(new_url))
+    let new_url = downloadURL.deletingLastPathComponent().appending(path: filename)
+    let new_url_path = new_url.asPath
+    if new_url_path.exists { try new_url_path.delete() }
+    try? downloadPath.move(new_url_path)
 	return new_url
 }
 
@@ -74,7 +76,7 @@ public struct ReleaseAssetDownloader {
 			if let release = kivy_release.releases.first  {
 				let zips = release.assets.compactMap { r in
 					switch r.name {
-					case "site-packages.zip", "kivy_dist.zip":
+					case "site-packages.zip", "dist_files.zip":
 						
 						return URL(string: r.browser_download_url )
 					default: return nil
@@ -82,6 +84,7 @@ public struct ReleaseAssetDownloader {
 					
 				}
 				for zip in zips {
+                    print(zip)
 					let dest: URL = try await downloadAsset(url: zip)
 					outputs.append(dest)
 				}
@@ -103,7 +106,7 @@ public struct ReleaseAssetDownloader {
 		
 		
 		func downloadFiles() async throws -> [URL]? {
-			guard let kivy_release = try await loadGithub(owner: "KivySwiftLink", repo: "KivyExtra").releases.first else {
+			guard let kivy_release = try await loadGithub(owner: "PythonSwiftLink", repo: "KivyExtra").releases.first else {
 				return nil
 			}
 			var output: [URL] = []

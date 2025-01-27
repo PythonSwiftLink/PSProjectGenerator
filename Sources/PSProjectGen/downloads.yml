@@ -6,9 +6,9 @@ kivy:
   repo: KivyCore
   version: lastest
   assets:
-    - asset: kivy_dist.zip
+    - asset: dist_files.zip
       type: dist_folder
-      extract_name: dist_lib
+      extract_name: dist_files
 
     - asset: site-packages.zip
       type: site_package

@@ -8,7 +8,7 @@ import XcodeProj
 
 public protocol PSProjTargetProtocol {
 	var name: String { get }
-	var pythonProject: String { get }
+	var pythonProject: Path { get }
 	
 	func projSettings() async throws -> Settings
 	func configFiles() async throws -> [String:String]
@@ -27,7 +27,7 @@ public protocol PSProjTargetProtocol {
 public protocol PSProjectProtocol {
 	var name: String { get }
 	
-	var py_src: String { get }
+	var py_src: Path { get }
 	
 	//var targets: [PSProjTargetProtocol] { get set }
 	func targets() async throws -> [Target]
@@ -65,7 +65,7 @@ public class PSProjectGen {
 	
 	
 	var configs: [Config] {
-		[.init(name: "debug", type: .debug),.init(name: "release", type: .release)]
+		[.init(name: "Debug", type: .debug),.init(name: "Release", type: .release)]
 	}
 	//func targets() async throws -> [Target] {  [ try await KivyProject(name: name, py_src: py_src).target() ] }
 	var schemes: [Scheme] {

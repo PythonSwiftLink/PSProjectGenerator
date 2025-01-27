@@ -22,7 +22,7 @@ extension PythonSwiftProjectCLI {
 	struct Kivy: AsyncParsableCommand {
 		
 		
-		static var configuration: CommandConfiguration = .init(
+		public static var configuration: CommandConfiguration = .init(
 			subcommands: [Create.self, GenerateSpec.self, Patch.self, Recipe.self]
 		)
 		

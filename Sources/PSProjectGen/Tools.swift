@@ -47,7 +47,7 @@ func pipInstall(_ requirements: Path, site_path: Path) -> String {
 	task.standardOutput = pipe
 	task.standardError = pipe
 	task.arguments = ["install","-r", requirements.string, "-t", site_path.string]
-	task.executableURL = .init(filePath: "/usr/local/bin/pip3.10")
+    task.executablePath = try? which_pip3()
 	task.standardInput = nil
 	task.launch()
 	

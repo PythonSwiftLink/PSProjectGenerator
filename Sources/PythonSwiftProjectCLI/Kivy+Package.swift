@@ -2,7 +2,7 @@ import Foundation
 import PathKit
 import ArgumentParser
 import PSProjectGen
-import RecipeBuilder
+//import RecipeBuilder
 
 
 extension PythonSwiftProjectCLI.Kivy {
@@ -16,7 +16,7 @@ extension PythonSwiftProjectCLI.Kivy {
 		@Option(name: .shortAndLong) var output: Path?
 		
 		func run() async throws {
-			try await RecipeBuilder(recipe: recipe, spec: spec, path: path, output: output).run()
+			//try await RecipeBuilder(recipe: recipe, spec: spec, path: path, output: output).run()
 		}
 	}
 }

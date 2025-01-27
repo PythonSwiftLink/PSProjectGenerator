@@ -7,7 +7,7 @@
 
 import Foundation
 import SwiftSyntax
-import SwiftSyntaxParser
+//import SwiftSyntaxParser
 import SwiftParser
 import SwiftSyntaxBuilder
 
@@ -18,8 +18,8 @@ private func addPythonSwiftImport(_ module_name: String) -> ExprSyntax {
 //		.init(label: "name", expression: .init(stringLiteral: "PyInit_corebluetooth"))
 //	])
 	//return FunctionCallExprSyntax(calledExpression: memberAccessExpr, argumentList: tuple)
-	return .init(FunctionCallExpr(stringLiteral: ".init(name: \"\(module_name)\", module: PyInit_\(module_name))"))
-		.withLeadingTrivia(.newline + .tab)
+	return .init(ExprSyntax(stringLiteral: ".init(name: \"\(module_name)\", module: PyInit_\(module_name))"))
+		.with(\.leadingTrivia ,.newline + .tab)
 //	fatalError()
 }
 
@@ -58,8 +58,8 @@ public func ModifyMainFile(source: String, imports: [String], pyswiftProducts: [
 						elements.append(addPythonSwiftImport(imp))
 					}
 					
-					arrayExpr.elements = .init(elements.map({ .init(expression: $0, trailingComma: .comma) }))
-					binding.initializer = .init(value: arrayExpr.withLeadingTrivia(.space))
+					arrayExpr.elements = .init(elements.map({ .init(expression: $0, trailingComma: .commaToken()) }))
+					binding.initializer = .init(value: arrayExpr.with(\.leadingTrivia ,.space))
 					variDecl.bindings = .init([binding])
 					
 					export.append(
@@ -75,5 +75,5 @@ public func ModifyMainFile(source: String, imports: [String], pyswiftProducts: [
 
 	}
 
-	return SourceFileSyntax(statements: .init(export), eofToken: .eof).description
+	return SourceFileSyntax(statements: .init(export), endOfFileToken: .endOfFileToken()).description
 }

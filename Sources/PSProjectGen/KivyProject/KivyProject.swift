@@ -11,7 +11,7 @@ import PathKit
 import XcodeGenKit
 import ProjectSpec
 import Yams
-import RecipeBuilder
+//import RecipeBuilder
 import Zip
 
 enum KivyCreateError: Error, CustomStringConvertible {
@@ -104,6 +104,11 @@ extension PathKit.Path {
 	
 }
 
+public func removeAll_so_libs(path: Path) {
+    let libs_files = path.iterateChildren().filter( {$0.extension == "libs"} )
+    libs_files.forEach({try? $0.delete()})
+}
+
 public func patchPythonLib(pythonLib: Path, dist: Path) throws {
 	let lib = pythonLib //workingDir + "lib"
 	let libs = lib.iterateChildren().filter( {$0.extension == "libs"} )
@@ -113,9 +118,9 @@ public func patchPythonLib(pythonLib: Path, dist: Path) throws {
 		// /Users/runner/work/KivyCoreBuilder/KivyCoreBuilder/dist/lib/iphoneos
 		
 		
-		if let result = try SoLibsFile(file: file, dist_lib: dist).output {
-			content = result
-		}
+//		if let result = try SoLibsFile(file: file, dist_lib: dist).output {
+//			content = result
+//		}
 //		content = content.replacingOccurrences(
 //			of: "/Users/runner/work/KivyCoreBuilder/KivyCoreBuilder/dist/lib",
 //			with: "\(dist.string)"
@@ -127,6 +132,8 @@ public func patchPythonLib(pythonLib: Path, dist: Path) throws {
 		let xcode_regex = try Regex("Xcode.*.app")
 		content = content.replacing(xcode_regex, with: "Xcode.app")
 		
+        let sdk_regex = try Regex("iPhoneOS.*.sdk")
+        content = content.replacing(sdk_regex, with: "iPhoneOS.sdk")
 		//print(content)
 		try file.write(content, encoding: .utf8)
 	}
@@ -146,11 +153,11 @@ public typealias ProjectSpecDictionary = [String:Any] //[ String: [[String: Any]
 public class KivyProject: PSProjectProtocol {
 	public var name: String
 	
-	public var py_src: String
+	public var py_src: Path
 	
 	var _targets: [PSProjTargetProtocol] = []
 	
-	var requirements: String?
+	var requirements: Path?
 	
 	var local_py_src: Bool
 	
@@ -160,13 +167,19 @@ public class KivyProject: PSProjectProtocol {
 	let resourcesPath: Path
 	let pythonLibPath: Path
 	var projectSpecData: SpecData?
+	let app_path: Path
+    let psp_bundle: Bundle
+    
+    let experimental: Bool
 	
-	public init(name: String, py_src: String?, requirements: String?, projectSpec: Path?, workingDir: Path) async throws {
+    public init(name: String, py_src: Path?, requirements: Path?, projectSpec: Path?, workingDir: Path, app_path: Path, experimental: Bool) async throws {
 		self.name = name
 		self.workingDir = workingDir
 		let resources = workingDir + "Resources"
 		self.resourcesPath = resources
 		self.pythonLibPath = resources + "lib"
+		self.app_path = app_path
+        self.experimental = experimental
 		self.local_py_src = py_src == nil
 		self.py_src = py_src ?? "py_src"
 		self.requirements = requirements
@@ -176,13 +189,17 @@ public class KivyProject: PSProjectProtocol {
 			name: name,
 			py_src: self.py_src,
 			//dist_lib: (try await Path.distLib(workingDir: workingDir)).string,
-			dist_lib: (workingDir + "dist_lib").string,
+			dist_lib: (workingDir + "dist_lib"),
 			projectSpec: projectSpec,
-			workingDir: workingDir
+			workingDir: workingDir,
+			app_path: app_path,
+            experimental: experimental
 		)
 		_targets = [
 			
 		]
+        psp_bundle = Bundle(path: (app_path + "PythonSwiftProject_PSProjectGen.bundle").string )!
+        
 		base_target.project = self
 		_targets.append(base_target)
 	}
@@ -209,7 +226,7 @@ public class KivyProject: PSProjectProtocol {
 	}
 	
 	public func configs() async throws -> [ProjectSpec.Config] {
-		[.init(name: "debug", type: .debug),.init(name: "release", type: .release)]
+		[.init(name: "Debug", type: .debug),.init(name: "Release", type: .release)]
 	}
 	
 	public func schemes() async throws -> [ProjectSpec.Scheme] {
@@ -226,14 +243,14 @@ public class KivyProject: PSProjectProtocol {
 	
 	public func packages() async throws -> [String : ProjectSpec.SwiftPackage] {
 		var releases = try await GithubAPI(owner: "KivySwiftLink", repo: "KivyCore")
-		print(releases)
+      
 		try! await releases.handleReleases()
 		guard let latest = releases.releases.first else { throw CocoaError(.coderReadCorrupt) }
 		
 		var output: [String : ProjectSpec.SwiftPackage] = [
 			"SwiftonizePlugin": .remote(
 				url: "https://github.com/pythonswiftlink/SwiftonizePlugin",
-				versionRequirement: .branch("development")
+				versionRequirement: .upToNextMajorVersion("0.0.2")
 			),
 			"PythonCore": .remote(
 				url: "https://github.com/kivyswiftlink/PythonCore",
@@ -296,9 +313,10 @@ public class KivyProject: PSProjectProtocol {
 		
 		try? (current + "Resources/YourApp").mkpath()
 		try? (current + "wrapper_sources").mkdir()
-		try? distIphoneos.mkpath()
-		try? distSimulator.mkpath()
-		
+        if !experimental {
+            try? distIphoneos.mkpath()
+            try? distSimulator.mkpath()
+        }
 		let kivy_core = ReleaseAssetDownloader.KivyCore()
 		
 		for asset in try await kivy_core.downloadFiles() ?? [] {
@@ -308,10 +326,12 @@ public class KivyProject: PSProjectProtocol {
 			if asset.lastPathComponent.contains("site") {
 				try await unpackAsset(src: .init(asset.path()), to: resourcesPath)
 			}
-			
-			if asset.lastPathComponent.contains("dist") {
-				try await unpackAsset(src: .init(asset.path()), to: distFolder)
-			}
+            if !experimental {
+                if asset.lastPathComponent.contains("dist") {
+                    try await unpackDistAssets(src: .init(asset.path()), to: distFolder)
+                    
+                }
+            }
 		}
 		if let recipes = projectSpecData?.toolchain_recipes {
 			let extra = ReleaseAssetDownloader.KivyExtra(recipes: recipes)
@@ -325,13 +345,16 @@ public class KivyProject: PSProjectProtocol {
 						try await unpackAsset(src: .init(asset.path()), to: mainSiteFolder)
 					}
 					
-					if name.contains("dist") {
-						try await unpackAsset(src: .init(asset.path()), to: distFolder)
-					}
+                    if !experimental {
+                        if name.contains("dist") {
+                            try await unpackAsset(src: .init(asset.path()), to: distFolder)
+                        }
+                    }
 					
 				}
 			}
 		}
+        
 		try await postStructure()
 	}
 	
@@ -341,18 +364,26 @@ public class KivyProject: PSProjectProtocol {
 		
 		if let requirements = requirements {
 			let reqPath: Path
-			reqPath = .init(requirements)
+			reqPath = requirements
 			
 			print("pip installing: \(reqPath)")
 			
 			pipInstall(reqPath, site_path: mainSiteFolder)
 		}
-		
-		for site_folder in site_folders {
-			try patchPythonLib(pythonLib: site_folder, dist: distFolder)
-		}
-		
-		
+        
+        
+        for site_folder in site_folders {
+            if experimental {
+                removeAll_so_libs(path: site_folder)
+            } else {
+                try patchPythonLib(pythonLib: site_folder, dist: distFolder + "iphoneos")
+            }
+        }
+        
+        if let kivy_requirements = psp_bundle.path(forResource: "kivy_requirements", withExtension: "txt") {
+            pipInstall(kivy_requirements, site_path: mainSiteFolder)
+        } else { fatalError("kivy_requirements.txt is missing")}
+        
 		let kivyAppFiles: Path = workingDir + "KivyAppFiles"
 		if kivyAppFiles.exists {
 			try kivyAppFiles.delete()
@@ -391,7 +422,7 @@ public class KivyProject: PSProjectProtocol {
 		if local_py_src {
 			try? (current + "py_src").mkdir()
 		} else {
-			try? (current + "py_src").symlink(.init(py_src))
+			try? (current + "py_src").symlink(py_src)
 		}
 		
 		if kivyAppFiles.exists {
@@ -415,6 +446,33 @@ public class KivyProject: PSProjectProtocol {
 		//try await completion(asset.asset, extract_folder)
 		//try? extract_folder.delete()
 	}
+    
+    public func unpackDistAssets(src: Path, to: Path) async throws {
+        //var download: Path = .init( try await download(url: url ).path() )
+        let new_loc = to + src.lastComponent
+        //try download.move(new_loc)
+        //download = new_loc
+        let tmp = try Path.uniqueTemporary()
+        //
+        try Zip.unzipFile(src.url, destination: tmp.url, overwrite: true, password: nil)
+        //temp.forEach({print($0)})
+        let tmp_dist = tmp + "dist_files"
+        defer { try? tmp.delete() }
+        for folder in try tmp_dist.children() {
+            print(folder)
+            let folder_name = folder.lastComponent
+            for file in try folder.children() {
+                print(file)
+                let folder_dest = to + folder_name
+                try? file.copy(folder_dest + file.lastComponent)
+            }
+                        
+        }
+        
+        //let extract_folder = temp + asset.extract_name
+        //try await completion(asset.asset, extract_folder)
+        //try? extract_folder.delete()
+    }
 	
 	public func c_reateStructure() async throws {
 		let current = workingDir
@@ -426,7 +484,17 @@ public class KivyProject: PSProjectProtocol {
 		//try? (current + "dist_lib/iphoneos").mkpath()
 		//try? (current + "dist_lib/iphonesimulator").mkpath()
 		//try? (current + "Resources").mkdir()
-		let downloadsPath = Path(Bundle.module.path(forResource: "downloads", ofType: "yml")!)
+		//let downloadsPath = Path(Bundle.module.path(forResource: "downloads", ofType: "yml")!)
+		
+		guard 
+			let psp_bundle = Bundle(path: (app_path + "PythonSwiftProject_PSProjectGen.bundle").string ),
+			let _downloads = psp_bundle.path(forResource: "downloads", ofType: "yml")
+		else {
+			print("could not locate \((app_path + "PythonSwiftProject_PSProjectGen.bundle").string)")
+			return
+		}
+		
+		let downloadsPath = Path(_downloads)
 		let downloader = try YAMLDecoder().decode([String:AssetsDownloader].self, from: downloadsPath.read())
 		
 		for (rootKey,asset) in downloader {
@@ -471,7 +539,7 @@ public class KivyProject: PSProjectProtocol {
 			//let site_path: Path = move_lib + "python3.10/site-packages"
 			let reqPath: Path
 			//if requirements.hasPrefix("/") || requirements.hasPrefix(".") {
-			reqPath = .init(requirements)
+			reqPath = requirements
 			//} else {
 				//reqPath = current + requirements
 			//}
@@ -525,7 +593,7 @@ public class KivyProject: PSProjectProtocol {
 			try? (current + "py_src").mkdir()
 		} else {
 			//try Path(py_src).symlink((current + "py_src"))
-			try? (current + "py_src").symlink(.init(py_src))
+			try? (current + "py_src").symlink(py_src)
 		}
 		// clean up
 		

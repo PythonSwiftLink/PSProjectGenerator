@@ -10,12 +10,14 @@ import ArgumentParser
 struct PythonSwiftProjectCLI: AsyncParsableCommand {
 	
 	static var configuration: CommandConfiguration = .init(
-		version: "0.0.7",
+		version: "0.0.9",
 		subcommands: [Kivy.self, SwiftUI.self]
 	)
 	
 	
-
+	enum CodingKeys: CodingKey {
+	}
 	
+
 	
 }

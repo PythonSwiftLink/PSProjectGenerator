@@ -32,7 +32,7 @@ func loadPackageDependencies(from projectSpec: PathKit.Path, output: inout [Proj
 			if let products = package["products"] as? [String] {
 				for product in products {
 					output.append(
-						.init(type: .package(product: product), reference: ref)
+						.init(type: .package(products: [product]), reference: ref)
 					)
 				}
 			}
@@ -45,9 +45,9 @@ func loadPythonPackageInfo(from projectSpec: PathKit.Path, imports: inout [Strin
 	guard let spec = try Yams.load(yaml: projectSpec.read()) as? [String: Any] else { return false }
 
 	if let packages = spec["packages"] as? [String:[String:Any]] {
-		print(packages)
+        //print(packages)
 		packages.forEach { (ref: String, package: [String : Any]) in
-			print(ref)
+			//print(ref)
 			if let python_imports = package["python_imports"] as? [String:Any] {
 				if let modules = python_imports["modules"] as? [String] {
 					imports.append(contentsOf: modules)

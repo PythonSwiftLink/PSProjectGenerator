@@ -1,0 +1,13 @@
+
+docutils==0.21.2
+    # via kivy
+#kivy==2.3.0
+    # via kivy-deps (pyproject.toml)
+kivy-garden==0.1.5
+    # via kivy
+pygments==2.18.0
+    # via kivy
+requests==2.32.3
+    # via kivy-garden
+urllib3==2.3.0
+    # via requests
